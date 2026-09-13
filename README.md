@@ -1,24 +1,12 @@
 # MockMate — AI-Powered Mock Interview Platform
 
-A full-stack AI mock interview platform with conversational voice interviewers, resume analysis, real-time transcription, and analytics.
+A full-stack AI mock interview platform with conversational voice interviewers, resume analysis, real-time transcription, and analytics. Built by [santhosh918278](https://github.com/santhosh918278).
 
 ---
+
 ## 🌐 Live Demo
 
-> ⚠️ **Note:** Hosted on Render's free tier — expect 30-60s cold starts on first load.
-> TTS, Whisper transcription, and real-time voice features run significantly faster
-> on local deployment. See setup guide below for best experience.
-
-| Service | URL |
-|---------|-----|
-| Frontend | https://mockmate-frontend-b8z6.onrender.com |
-| Backend API | https://mockmate-backend-rd60.onrender.com |
-| AI Service | https://mockmate-ai-k2pt.onrender.com |
-| Database | PostgreSQL via Supabase (ap-northeast-1, Tokyo) |
-| Cache / Queue | Redis via Upstash (managed, TLS) |
-
-> ⚠️ Free-tier Supabase projects pause after 7 days of inactivity —
-> if the demo is down, the DB may need a manual wake-up.
+Not currently deployed. Follow the setup guide below to run it locally with Docker, or deploy your own instance to Render, Railway, or similar and add the link here.
 
 ## 🏗️ Architecture
 
@@ -311,13 +299,15 @@ git push origin main
 ✅ frontend-build  — ESLint + Vite build
         ↓ (only if ALL pass)
 ✅ deploy
-   ├─ Force-sync fork to latest code
    ├─ Deploy Backend  → Render
    ├─ Deploy Frontend → Render
    └─ Deploy AI Service → Render
 ```
 
 If any check fails, **nothing is deployed** — production stays on the last working code.
+
+> The deploy step needs your own Render service hooks/API keys added as GitHub Actions
+> secrets in your repo settings — it won't deploy anywhere until you configure that.
 
 ---
 
