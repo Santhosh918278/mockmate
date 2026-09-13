@@ -88,16 +88,33 @@ Minimum required in `.env`:
 GROQ_API_KEY=your-groq-api-key-here
 JWT_SECRET=any-long-random-string
 JWT_REFRESH_SECRET=another-long-random-string
+DATABASE_URL=postgresql://postgres:postgres@postgres:5432/ai_interview?schema=public
+DIRECT_URL=postgresql://postgres:postgres@postgres:5432/ai_interview?schema=public
 ```
+
+> ⚠️ Use `postgres` (the service name), not `localhost`, in these URLs — containers reach
+> each other by service name inside Docker's network. `DIRECT_URL` is required by the Prisma
+> schema even though it's identical to `DATABASE_URL` here; it only differs if you later switch
+> to a pooled connection (e.g. Supabase).
 
 #### Step 3: Start all services
 ```bash
 docker compose up --build -d
 ```
 
-**Wait 30-60 seconds** for all services to start. The DB migration runs automatically on first boot.
+**Wait 30-60 seconds** for all services to start.
 
-#### Step 3: Access the services
+#### Step 4: Run database migrations (first time only)
+
+Migrations don't run automatically — apply them once after the containers are up:
+```bash
+docker compose exec backend npx prisma migrate deploy
+```
+
+You'll need to repeat this step only if you later wipe the database volume
+(`docker compose down -v`).
+
+#### Step 5: Access the services
 - **Frontend UI:** `http://localhost:3000`
 - **Backend API:** `http://localhost:5000`
 - **AI Service:** `http://localhost:8000`
@@ -108,6 +125,24 @@ docker compose up --build -d
 
 **Problem: "GROQ_API_KEY not set"**
 - Solution: Make sure you set the environment variable before running `docker compose up`.
+
+**Problem: "You must provide a nonempty URL" / "DATABASE_URL resolved to an empty string"**
+- Solution: Add `DATABASE_URL` and `DIRECT_URL` to your `.env` file (see Step 2 above), then
+  `docker compose down && docker compose up -d`.
+
+**Problem: "The table `public.users` does not exist in the current database"**
+- Solution: Run the migration step manually: `docker compose exec backend npx prisma migrate deploy`
+
+**Problem: "Virtualization support not detected" (Docker Desktop won't start, Windows)**
+- Solution: Open "Turn Windows features on or off" and enable both "Virtual Machine Platform"
+  and "Windows Subsystem for Linux", then restart. If Docker still can't start WSL, run
+  `wsl --update` in PowerShell. Actual BIOS-level virtualization is usually already enabled by
+  default on modern PCs — check with `systeminfo` (look for "A hypervisor has been detected")
+  before assuming you need to change BIOS settings.
+
+**Problem: Image pull fails with "unexpected EOF" or "short read"**
+- Solution: This is an interrupted download, not a project issue — just re-run
+  `docker compose up --build -d`. Docker resumes using whatever it already downloaded.
 
 **Problem: "Port already in use"**
 - Solution: Stop any services using ports 3000, 5000, 8000, 5432, 6379, 9090, or 3001.
