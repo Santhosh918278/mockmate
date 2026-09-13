@@ -1,0 +1,35 @@
+node_modules/
+dist/
+.next/
+.env
+.env.local
+.env.*.local
+*.log
+uploads/
+information/
+*.wav
+*.webm
+testdata/*.pdf
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.DS_Store
+Thumbs.db
+
+# Dead code from TanStack Start → Vite migration
+frontend/src/pages/
+frontend/convert-routes.cjs
+
+# Piper TTS model files — large binary files, not for version control
+*.onnx
+*.onnx.json
+voices/
+
+# Internal tooling logs
+.waylog/
+
+# Local dev database - contains real test data, never commit
+backend/prisma/dev.db
+backend/prisma/*.db
+backend/prisma/*.db-journal

@@ -1,0 +1,345 @@
+# MockMate — AI-Powered Mock Interview Platform
+
+A full-stack AI mock interview platform with conversational voice interviewers, resume analysis, real-time transcription, and analytics.
+
+---
+## 🌐 Live Demo
+
+> ⚠️ **Note:** Hosted on Render's free tier — expect 30-60s cold starts on first load.
+> TTS, Whisper transcription, and real-time voice features run significantly faster
+> on local deployment. See setup guide below for best experience.
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://mockmate-frontend-b8z6.onrender.com |
+| Backend API | https://mockmate-backend-rd60.onrender.com |
+| AI Service | https://mockmate-ai-k2pt.onrender.com |
+| Database | PostgreSQL via Supabase (ap-northeast-1, Tokyo) |
+| Cache / Queue | Redis via Upstash (managed, TLS) |
+
+> ⚠️ Free-tier Supabase projects pause after 7 days of inactivity —
+> if the demo is down, the DB may need a manual wake-up.
+
+## 🏗️ Architecture
+
+```
+Browser (UI)
+  │  HTTPS / WebSocket
+  ▼
+Frontend (Vite + React Router)  ← port 3000
+  │  REST
+  ▼
+Backend API (Express + Prisma)    ← port 5000
+  │  SQL          │  Redis (BullMQ)
+  ▼               ▼
+PostgreSQL     Queue jobs
+                   │
+                   ▼
+        Worker process (BullMQ)
+                   │
+                   ▼
+      AI Service (FastAPI + Groq) ← port 8000
+        ├── gTTS  (MP3 audio)
+        ├── Faster-Whisper (transcription)
+        └── Groq LLM  (conversation + evaluation)
+```
+
+## 🚀 Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | Vite, React 19, React Router, TailwindCSS 4, Zustand, shadcn/ui |
+| **Backend** | Node.js, Express 5, TypeScript, Prisma ORM |
+| **AI Service** | Python 3.12, FastAPI, Groq (via OpenAI client) |
+| **TTS** | gTTS (Google Text-to-Speech) |
+| **Transcription** | Groq Whisper API (`whisper-large-v3-turbo`) — ~600ms latency |
+| **Database** | PostgreSQL 16 |
+| **Cache / Queue** | Redis 7, BullMQ |
+| **Realtime** | Socket.IO (signaling) |
+| **Auth** | JWT, bcrypt, HTTP-only cookies, RBAC |
+| **DevOps** | Docker Compose, GitHub Actions CI/CD, Prometheus, Grafana |
+
+---
+
+## 🛠️ Complete Setup Guide
+
+> ⚡ **Tip:** Local deployment runs significantly faster than Render or other free-tier 
+> cloud platforms. Render's cold starts and shared CPU noticeably slow down TTS synthesis, 
+> Whisper transcription, and real-time WebSocket features. We strongly recommend running 
+> locally for the best experience.
+You can run this project in two ways: **Using Docker (Recommended)** or **Manual Local Setup**.
+
+### Prerequisites
+- [Node.js](https://nodejs.org/en/) v20+
+- [Python](https://www.python.org/) v3.12+
+- [Docker & Docker Compose](https://www.docker.com/) *(Docker method)*
+- [PostgreSQL 16](https://www.postgresql.org/) + [Redis 7](https://redis.io/) *(Manual method)*
+- A [Groq API Key](https://console.groq.com/keys) — **Get one free at [console.groq.com](https://console.groq.com/keys)**
+
+---
+
+### Method 1: Docker Compose (Recommended)
+
+Spins up all 8 services (Frontend, Backend, Worker, AI Service, Database, Redis, Prometheus, Grafana) with one command.
+
+#### Step 1: Clone the repository
+```bash
+git clone https://github.com/santhosh918278/mockmate.git
+cd mockmate
+```
+
+#### Step 2: Create your `.env` file
+
+Copy the example and fill in your credentials:
+```bash
+cp .env.example .env   # or create .env manually
+```
+
+Minimum required in `.env`:
+```env
+GROQ_API_KEY=your-groq-api-key-here
+JWT_SECRET=any-long-random-string
+JWT_REFRESH_SECRET=another-long-random-string
+```
+
+#### Step 3: Start all services
+```bash
+docker compose up --build -d
+```
+
+**Wait 30-60 seconds** for all services to start. The DB migration runs automatically on first boot.
+
+#### Step 3: Access the services
+- **Frontend UI:** `http://localhost:3000`
+- **Backend API:** `http://localhost:5000`
+- **AI Service:** `http://localhost:8000`
+- **Grafana:** `http://localhost:3001` (admin / admin)
+- **Prometheus:** `http://localhost:9090`
+
+#### Troubleshooting Docker Setup
+
+**Problem: "GROQ_API_KEY not set"**
+- Solution: Make sure you set the environment variable before running `docker compose up`.
+
+**Problem: "Port already in use"**
+- Solution: Stop any services using ports 3000, 5000, 8000, 5432, 6379, 9090, or 3001.
+  ```bash
+  docker compose down
+  # Then restart
+  docker compose up -d
+  ```
+
+---
+
+### Method 2: Manual Local Setup
+
+If you prefer to run services individually without Docker.
+
+#### Step 0: Clone the repository
+```bash
+git clone https://github.com/santhosh918278/mockmate.git
+cd mockmate
+```
+
+#### Step 1: Start Database & Redis
+```bash
+docker compose up postgres redis -d
+```
+
+Wait 10 seconds for them to be ready.
+
+#### Step 2: Backend (Express / Node.js)
+```bash
+cd backend
+npm install
+```
+
+Create `backend/.env` file with these values:
+```env
+PORT=5000
+NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ai_interview?schema=public"
+JWT_SECRET=your-super-secret-jwt-key-change-this
+JWT_REFRESH_SECRET=your-refresh-secret-key-change-this
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+REDIS_URL=redis://localhost:6379
+AI_SERVICE_URL=http://localhost:8000
+GROQ_API_KEY=your-groq-api-key-here
+UPLOAD_DIR=./uploads
+MAX_FILE_SIZE=10485760
+```
+
+Run database migrations and start:
+```bash
+npx prisma generate
+npx prisma db push
+npm run dev
+```
+
+Backend should now be running on `http://localhost:5000`.
+
+#### Step 3: AI Service (Python / FastAPI)
+
+Open a **new terminal window**, then:
+
+```bash
+cd ai-service
+python -m venv venv
+
+# Activate virtual environment:
+# Windows PowerShell:
+venv\Scripts\activate
+# Mac/Linux:
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+Create `ai-service/.env` file:
+```env
+AI_SERVICE_PORT=8000
+GROQ_API_KEY=your-groq-api-key-here
+BACKEND_URL=http://localhost:5000
+```
+
+Start the AI service:
+```bash
+python -m app.main
+```
+
+AI service should now be running on `http://localhost:8000`.
+
+#### Step 4: Frontend (Vite + React Router)
+
+Open a **new terminal window**, then:
+
+```bash
+cd frontend
+npm install
+```
+
+Create `frontend/.env.local` file:
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_WS_URL=http://localhost:5000
+```
+
+Start the frontend:
+```bash
+npm run dev
+```
+
+Open `http://localhost:3000` in your browser.
+
+#### Manual Setup Troubleshooting
+
+**Problem: "Cannot connect to database"**
+- Make sure `docker compose up postgres redis -d` is running.
+- Check `DATABASE_URL` in `backend/.env` matches the connection string.
+
+**Problem: "Module not found" errors**
+- Make sure you ran `npm install` in both `backend/` and `frontend/`.
+- For AI service, make sure you activated the virtual environment before `pip install`.
+
+---
+
+## ✨ Features
+
+- **Conversational AI Interviewers** — 3 distinct personas (Priya, Jordan, Sarah), each with a unique voice accent and specialty area, powered by Groq LLMs
+- **6-Phase Interview Flow** — Greeting → Small Talk → Agenda → Background → Core Questions → Closing, enforced by a master prompt
+- **gTTS Voice Synthesis** — Google Text-to-Speech for audio generation; falls back to browser `speechSynthesis`
+- **Hybrid Transcription** — Browser `SpeechRecognition` provides live word display during recording; Groq Whisper (`whisper-large-v3-turbo`) delivers the final accurate transcript in ~600ms after stop — 30–100x faster than local Faster-Whisper on free-tier CPU
+- **4-Second Review Window** — After Whisper processes the answer, a countdown gives the candidate time to review before auto-submit
+- **Adaptive Follow-up Questions** — Backend injects AI-generated follow-ups based on answers (up to 4, capped at 12 total questions)
+- **Resume Analysis** — PDF upload, ATS scoring, skill extraction via Groq, processed via BullMQ workers
+- **6 Interview Types** — Technical, Behavioral, System Design, HR, DSA, Mixed
+- **Analytics Dashboard** — Score trends, category breakdowns, recent interview history
+- **JWT Auth** — HTTP-only cookie tokens, refresh token rotation, RBAC (Candidate / Recruiter / Admin)
+- **Prometheus + Grafana** — HTTP request metrics, WebSocket connection gauge, worker job metrics
+
+---
+
+## 📊 Core API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register (CANDIDATE or RECRUITER) |
+| POST | `/api/auth/login` | Login, sets HTTP-only cookies |
+| POST | `/api/auth/refresh` | Rotate refresh token |
+| GET | `/api/auth/me` | Current authenticated user |
+| POST | `/api/resumes` | Upload PDF resume |
+| GET | `/api/resumes` | List resumes |
+| POST | `/api/resumes/:id/analyze` | Trigger AI analysis |
+| POST | `/api/interviews` | Create interview + generate questions |
+| GET | `/api/interviews/:id` | Get interview with questions |
+| PATCH | `/api/interviews/:id/start` | Start interview (→ IN_PROGRESS) |
+| PATCH | `/api/interviews/:id/complete` | Complete + compute scores |
+| POST | `/api/interviews/conversational` | AI conversational turn (proxied to AI service) |
+| POST | `/api/interviews/questions/:id/answer` | Submit answer transcript |
+| POST | `/api/tts` | Synthesize speech (gTTS → MP3) |
+| POST | `/api/transcribe/` | Transcribe audio (Faster-Whisper) |
+| GET | `/api/analytics/candidate` | Candidate score analytics |
+| GET | `/api/health` | Health check |
+| GET | `/metrics` | Prometheus metrics |
+
+---
+
+## 📁 Project Structure
+
+```
+├── frontend/          Vite + React 19 + React Router (port 3000)
+├── backend/           Express 5 + TypeScript + Prisma (port 5000)
+├── ai-service/        FastAPI + Groq + gTTS + Faster-Whisper (port 8000)
+├── monitoring/        Prometheus + Grafana configs
+├── .github/           CI/CD workflows
+└── docker-compose.yml Full 8-service orchestration
+```
+
+---
+
+## ⚙️ CI/CD Pipeline
+
+Every push to `main` runs the full pipeline automatically:
+
+```
+git push origin main
+        ↓
+✅ backend-check   — TypeScript type check + Prisma generate
+✅ ai-service-check — pip install + import check + pytest
+✅ frontend-build  — ESLint + Vite build
+        ↓ (only if ALL pass)
+✅ deploy
+   ├─ Force-sync fork to latest code
+   ├─ Deploy Backend  → Render
+   ├─ Deploy Frontend → Render
+   └─ Deploy AI Service → Render
+```
+
+If any check fails, **nothing is deployed** — production stays on the last working code.
+
+---
+
+## 🚫 Important: Large Files & Git
+
+The following files are **NOT committed to Git** because they're too large for GitHub:
+
+- `*.wav`, `*.webm` — Test audio files
+- `testdata/*.pdf` — Sample resume PDFs
+
+**These files are automatically ignored** via `.gitignore`.
+
+### For New Contributors
+
+If you clone this repo and want to contribute:
+
+1. **Never commit large binary files.** If you add new test audio files, add them to `.gitignore`.
+
+2. **If you accidentally stage a large file:**
+   ```bash
+   git rm --cached path/to/large-file
+   git commit --amend --no-edit
+   ```
+
+3. **Push safely** — Git will reject pushes with files >100 MB. If that happens, remove them from history before pushing.

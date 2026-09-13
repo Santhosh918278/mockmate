@@ -1,0 +1,104 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # Type Check Backend
+  backend-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx tsc --noEmit
+      - run: echo "Backend type check passed!"
+
+  # Import check + unit tests for AI Service
+  ai-service-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./ai-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: ai-service/requirements.txt
+      - run: pip install -r requirements.txt
+      - run: pip install pytest
+      - run: python -c "from app.main import app; print('AI service imports OK')"
+      - run: python -m pytest tests/ -v
+
+  # Lint and Build Frontend
+  frontend-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  # Deploy — syncs fork then triggers all 3 Render services
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [backend-check, ai-service-check, frontend-build]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Force-sync fork via git push
+        continue-on-error: true
+        run: |
+          git clone --depth 1 \
+            https://x-access-token:${{ secrets.FORK_SYNC_TOKEN }}@github.com/DSurya11/mockmate.git \
+            /tmp/upstream-repo
+          cd /tmp/upstream-repo
+          git remote add fork \
+            https://x-access-token:${{ secrets.FORK_SYNC_TOKEN }}@github.com/dantulurisurya71-byte/mockmate.git
+          git push fork main:main --force
+          echo "Fork synced via git push"
+
+      - name: Wait for fork sync to propagate
+        run: sleep 15
+
+      - name: Deploy Backend
+        run: |
+          curl -s -X POST "${{ secrets.RENDER_BACKEND_HOOK }}"
+          echo "Backend deploy triggered"
+
+      - name: Deploy Frontend
+        run: |
+          curl -s -X POST "${{ secrets.RENDER_FRONTEND_HOOK }}"
+          echo "Frontend deploy triggered"
+
+      - name: Deploy AI Service
+        run: |
+          curl -s -X POST "${{ secrets.RENDER_AI_HOOK }}"
+          echo "AI service deploy triggered"
+
+      - name: Done
+        run: echo "All 3 Render services deploying. Check render.com for status."
