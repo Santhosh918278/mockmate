@@ -2,3 +2,4 @@
 
 - **Sep 15, 2026 13:33**: refactor(backend): optimize interview session token generation
 - **Sep 15, 2026 20:43**: feat(frontend): improve audio waveform rendering during AI response
+- **Sep 16, 2026 10:00**: docs: clarify local setup requirements and Docker commands
