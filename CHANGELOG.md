@@ -9,3 +9,4 @@
 - **Sep 17, 2026 20:28**: feat(backend): implement feedback scoring calculation utility
 - **Sep 18, 2026 10:20**: test(ai-service): add unit tests for mock interviewer persona generator
 - **Sep 18, 2026 14:02**: refactor(frontend): extract interview question card into reusable component
+- **Sep 18, 2026 20:32**: fix(backend): correct CORS header validation for websocket connection
