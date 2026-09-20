@@ -14,3 +14,4 @@
 - **Sep 19, 2026 17:18**: feat(monitoring): configure health check endpoints for container check
 - **Sep 20, 2026 10:26**: style(frontend): update dark mode theme color contrast for accessibility
 - **Sep 20, 2026 11:31**: refactor(ai-service): optimize prompt payload serialization
+- **Sep 20, 2026 20:50**: fix(frontend): handle websocket reconnection on temporary network drop
