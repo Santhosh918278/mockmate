@@ -12,3 +12,4 @@
 - **Sep 18, 2026 20:32**: fix(backend): correct CORS header validation for websocket connection
 - **Sep 19, 2026 10:33**: docs: add architectural diagram link and environment variable specs
 - **Sep 19, 2026 17:18**: feat(monitoring): configure health check endpoints for container check
+- **Sep 20, 2026 10:26**: style(frontend): update dark mode theme color contrast for accessibility
