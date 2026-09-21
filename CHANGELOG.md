@@ -16,3 +16,4 @@
 - **Sep 20, 2026 11:31**: refactor(ai-service): optimize prompt payload serialization
 - **Sep 20, 2026 20:50**: fix(frontend): handle websocket reconnection on temporary network drop
 - **Sep 21, 2026 10:36**: test(backend): add test suite for session result parsing
+- **Sep 21, 2026 14:10**: chore: update .gitignore rules for build artifacts and logs
