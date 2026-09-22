@@ -19,3 +19,4 @@
 - **Sep 21, 2026 14:10**: chore: update .gitignore rules for build artifacts and logs
 - **Sep 21, 2026 20:34**: feat(frontend): add real-time audio input level indicator
 - **Sep 22, 2026 10:17**: refactor(backend): streamline Prisma query for interview history
+- **Sep 22, 2026 17:23**: docs: expand API documentation for interview transcript endpoint
