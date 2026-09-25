@@ -25,3 +25,4 @@
 - **Sep 23, 2026 20:15**: style(backend): standardize error response format across routes
 - **Sep 24, 2026 10:43**: refactor(frontend): optimize render performance for long transcripts
 - **Sep 24, 2026 14:19**: test(frontend): add test for audio recording controller hook
+- **Sep 25, 2026 10:08**: feat(backend): add request rate limiting on interview creation API
