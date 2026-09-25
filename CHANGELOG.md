@@ -26,3 +26,4 @@
 - **Sep 24, 2026 10:43**: refactor(frontend): optimize render performance for long transcripts
 - **Sep 24, 2026 14:19**: test(frontend): add test for audio recording controller hook
 - **Sep 25, 2026 10:08**: feat(backend): add request rate limiting on interview creation API
+- **Sep 25, 2026 09:14**: docs: update deployment troubleshooting guide
