@@ -29,3 +29,4 @@
 - **Sep 25, 2026 09:14**: docs: update deployment troubleshooting guide
 - **Sep 25, 2026 17:35**: fix(monitoring): fix log formatting for structured audit logging
 - **Sep 26, 2026 10:59**: refactor(ai-service): improve fallback response selection logic
+- **Sep 26, 2026 11:27**: feat(frontend): add copy transcript button to summary screen
