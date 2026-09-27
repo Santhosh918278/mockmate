@@ -32,3 +32,4 @@
 - **Sep 26, 2026 11:27**: feat(frontend): add copy transcript button to summary screen
 - **Sep 26, 2026 20:45**: style(frontend): polish button hover states and transitions
 - **Sep 27, 2026 10:19**: chore(docker): optimize multi-stage Docker build layers
+- **Sep 27, 2026 14:38**: fix(backend): fix session timeout cleanup job interval
