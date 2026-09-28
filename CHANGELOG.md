@@ -34,3 +34,4 @@
 - **Sep 27, 2026 10:19**: chore(docker): optimize multi-stage Docker build layers
 - **Sep 27, 2026 14:38**: fix(backend): fix session timeout cleanup job interval
 - **Sep 28, 2026 10:12**: refactor(frontend): clean up unused state imports in interview view
+- **Sep 28, 2026 10:00**: docs: update README with environment template details
