@@ -6,7 +6,13 @@ A full-stack AI mock interview platform with conversational voice interviewers, 
 
 ## 🌐 Live Demo
 
-Not currently deployed. Follow the setup guide below to run it locally with Docker, or deploy your own instance to Render, Railway, or similar and add the link here.
+| Service | URL |
+|---------|-----|
+| Frontend (Live App) | https://mockmate-ruby.vercel.app |
+| Backend API | https://mockmate-backend-tsrd.onrender.com |
+| Database | PostgreSQL via Supabase |
+| Cache / Queue | Redis via Upstash |
+
 
 ## 🏗️ Architecture
 
